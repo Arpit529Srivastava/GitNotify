@@ -5,6 +5,27 @@ import { InformationCircleIcon, CheckCircleIcon, ExclamationCircleIcon, Cog6Toot
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/config";
 const TOKEN = process.env.NEXT_PUBLIC_CONFIG_TOKEN || "devtoken";
 
+// Types for config
+export type Notification = {
+  event_type: string;
+  actions?: string[];
+  repos?: string[];
+};
+
+export type GitHubApp = {
+  app_id?: number;
+  installation_id?: number;
+  private_key_path?: string;
+};
+
+export type Config = {
+  organization: string;
+  port: number;
+  webhook_secret: string;
+  notifications: Notification[];
+  github_app?: GitHubApp;
+};
+
 // Helper for floating label
 function FloatingLabel({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -16,14 +37,6 @@ function FloatingLabel({ label, children }: { label: string; children: React.Rea
     </div>
   );
 }
-
-type Config = {
-  organization: string;
-  port: number;
-  webhook_secret: string;
-  notifications: any;
-  github_app?: any;
-};
 
 export default function ConfigPage() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -54,7 +67,7 @@ export default function ConfigPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!config) return;
-    setConfig({ ...config, [e.target.name]: e.target.value });
+    setConfig({ ...config, [e.target.name]: e.target.value } as Config);
   };
 
   const handleNotifChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -66,7 +79,7 @@ export default function ConfigPage() {
     setError(null);
     setSuccess(null);
     setSaving(true);
-    let notifications;
+    let notifications: Notification[];
     try {
       notifications = JSON.parse(notifText);
     } catch {
@@ -74,7 +87,7 @@ export default function ConfigPage() {
       setSaving(false);
       return;
     }
-    const updated = { ...config, notifications };
+    const updated = { ...config, notifications } as Config;
     const res = await fetch(API_URL, {
       method: "PUT",
       headers: {
