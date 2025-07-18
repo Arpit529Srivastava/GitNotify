@@ -1,0 +1,41 @@
+# GitNotify Configuration Example
+# Copy this file to config.yml and customize it for your organization
+
+# The GitHub organization to monitor
+organization: "your-organization-name"
+
+# The port to listen for webhooks on
+port: 8080
+
+# The webhook secret used to verify payloads from GitHub
+# This should match the secret you configure in your GitHub webhook
+webhook_secret: "your-webhook-secret-here"
+
+# GitHub App authentication (for future use)
+github_app:
+  app_id: 123456
+  installation_id: 789012
+  private_key_path: "/path/to/your/private-key.pem"
+
+# Notification rules - only events matching these rules will be logged
+# If no rules are specified, all events will be logged
+notifications:
+  # Notify for all issue events
+  - event_type: "issues"
+    actions: ["opened", "closed", "reopened"]
+    # repos: [] # Leave empty to monitor all repos in the organization
+
+  # Notify for pull request events
+  - event_type: "pull_request"
+    actions: ["opened", "closed", "reopened", "synchronize"]
+    # repos: ["specific-repo-name"] # Uncomment and specify repo names to monitor only specific repos
+
+  # Example: Only notify for security-related issues
+  # - event_type: "issues"
+  #   actions: ["opened"]
+  #   repos: ["security-repo"]
+
+  # Example: Only notify for documentation changes
+  # - event_type: "pull_request"
+  #   actions: ["opened", "synchronize"]
+  #   repos: ["docs-repo"] 
