@@ -1,0 +1,210 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { InformationCircleIcon, CheckCircleIcon, ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/config";
+const TOKEN = process.env.NEXT_PUBLIC_CONFIG_TOKEN || "devtoken";
+
+// Helper for floating label
+function FloatingLabel({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="relative my-4">
+      {children}
+      <span className="absolute left-3 top-[-0.7rem] bg-white px-1 text-xs text-gray-500 font-medium pointer-events-none">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+type Config = {
+  organization: string;
+  port: number;
+  webhook_secret: string;
+  notifications: any;
+  github_app?: any;
+};
+
+export default function ConfigPage() {
+  const [config, setConfig] = useState<Config | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [notifText, setNotifText] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch(API_URL, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+      })
+      .then((data) => {
+        setConfig(data);
+        setNotifText(JSON.stringify(data.notifications, null, 2));
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!config) return;
+    setConfig({ ...config, [e.target.name]: e.target.value });
+  };
+
+  const handleNotifChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotifText(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setSaving(true);
+    let notifications;
+    try {
+      notifications = JSON.parse(notifText);
+    } catch {
+      setError("Notifications must be valid JSON");
+      setSaving(false);
+      return;
+    }
+    const updated = { ...config, notifications };
+    const res = await fetch(API_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      body: JSON.stringify(updated),
+    });
+    if (res.ok) {
+      setSuccess("Configuration updated successfully!");
+    } else {
+      setError(await res.text());
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r flex flex-col items-center py-8 shadow-lg">
+        <div className="flex items-center gap-2 mb-8">
+          <Cog6ToothIcon className="h-8 w-8 text-blue-600" />
+          <span className="text-xl font-bold text-gray-800 tracking-tight">GitNotify</span>
+        </div>
+        <nav className="flex flex-col gap-4 w-full px-6">
+          <a href="/config" className="flex items-center gap-2 text-blue-700 font-semibold bg-blue-100 rounded px-3 py-2">
+            <Cog6ToothIcon className="h-5 w-5" />
+            Configuration
+          </a>
+          {/* Future: Add more nav items here */}
+        </nav>
+        <div className="mt-auto mb-4 text-gray-400 text-xs">Powered by Next.js & TailwindCSS</div>
+      </aside>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-start py-12 px-4">
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
+          <div className="flex items-center gap-3 mb-6">
+            <Cog6ToothIcon className="h-7 w-7 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-800">Configuration Dashboard</h1>
+          </div>
+          <p className="text-gray-500 mb-8 flex items-center gap-2">
+            <InformationCircleIcon className="h-5 w-5 text-blue-400" />
+            Manage your GitNotify instance settings below. Changes are applied live.
+          </p>
+          {loading ? (
+            <div className="flex items-center gap-2 text-blue-500 animate-pulse">
+              <Cog6ToothIcon className="h-5 w-5 animate-spin" /> Loading configuration...
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-2 text-red-500">
+              <ExclamationCircleIcon className="h-5 w-5" /> Error: {error}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <FloatingLabel label="Organization">
+                <input
+                  className="border-2 border-blue-200 rounded-lg px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  name="organization"
+                  value={config?.organization || ""}
+                  onChange={handleChange}
+                  required
+                  autoComplete="off"
+                />
+              </FloatingLabel>
+              <FloatingLabel label="Port">
+                <input
+                  className="border-2 border-blue-200 rounded-lg px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  name="port"
+                  type="number"
+                  value={config?.port || 8080}
+                  onChange={handleChange}
+                  required
+                  min={1}
+                  max={65535}
+                />
+              </FloatingLabel>
+              <FloatingLabel label="Webhook Secret">
+                <input
+                  className="border-2 border-blue-200 rounded-lg px-3 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  name="webhook_secret"
+                  value={config?.webhook_secret || ""}
+                  onChange={handleChange}
+                  required
+                  autoComplete="off"
+                  type="password"
+                />
+              </FloatingLabel>
+              <FloatingLabel label="Notifications (JSON)">
+                <textarea
+                  className="border-2 border-blue-200 rounded-lg px-3 py-3 w-full font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  rows={8}
+                  value={notifText}
+                  onChange={handleNotifChange}
+                  required
+                  spellCheck={false}
+                />
+                <span className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                  <InformationCircleIcon className="h-4 w-4" /> Paste or edit notification rules as JSON
+                </span>
+              </FloatingLabel>
+              {/* Future: Add GitHub App section here */}
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold shadow hover:from-blue-700 hover:to-blue-600 transition flex items-center gap-2 disabled:opacity-60"
+                disabled={saving}
+              >
+                {saving ? (
+                  <span className="flex items-center gap-2"><Cog6ToothIcon className="h-5 w-5 animate-spin" /> Saving...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><CheckCircleIcon className="h-5 w-5" /> Save Changes</span>
+                )}
+              </button>
+              {success && (
+                <div className="flex items-center gap-2 text-green-600 mt-2">
+                  <CheckCircleIcon className="h-5 w-5" /> {success}
+                </div>
+              )}
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 mt-2">
+                  <ExclamationCircleIcon className="h-5 w-5" /> {error}
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+        <footer className="mt-8 text-gray-400 text-xs flex items-center gap-2">
+          <svg width="20" height="20" fill="currentColor" className="text-gray-400"><path d="M10 .5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19Zm0 1.5a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm.25 2.25a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-.75-.75Zm0 10a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-.75-.75Zm-5-5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-.75-.75Zm10 0a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-.75-.75ZM5.47 5.47a.75.75 0 0 0-1.06 1.06l1.77 1.77a.75.75 0 0 0 1.06-1.06L5.47 5.47Zm7.06 7.06a.75.75 0 0 0-1.06 1.06l1.77 1.77a.75.75 0 0 0 1.06-1.06l-1.77-1.77ZM2.75 10a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5A.75.75 0 0 0 2.75 10Zm14.5 0a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-.75-.75Z"/></svg>
+          &copy; {new Date().getFullYear()} GitNotify. All rights reserved.
+        </footer>
+      </main>
+    </div>
+  );
+} 
