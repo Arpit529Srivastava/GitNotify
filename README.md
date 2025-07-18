@@ -1,5 +1,7 @@
 # GitNotify
 
+<img src = "GitNotify.png" width = "500" height = "300">
+
 A powerful, configurable, and low-noise notification tool for GitHub organizations. GitNotify receives webhook notifications from GitHub and provides filtered, real-time updates about issues and pull requests.
 
 ## Features
@@ -40,7 +42,7 @@ webhook_secret: "your-webhook-secret-here"
 notifications:
   - event_type: "issues"
     actions: ["opened", "closed", "reopened"]
-  
+
   - event_type: "pull_request"
     actions: ["opened", "closed", "reopened", "synchronize"]
 ```
@@ -87,9 +89,9 @@ github_app:
 
 # Optional: Notification rules
 notifications:
-  - event_type: "issues"           # Event type to monitor
-    actions: ["opened", "closed"]   # Specific actions to notify for
-    repos: ["repo1", "repo2"]      # Optional: specific repos to monitor
+  - event_type: "issues" # Event type to monitor
+    actions: ["opened", "closed"] # Specific actions to notify for
+    repos: ["repo1", "repo2"] # Optional: specific repos to monitor
 ```
 
 ### Notification Rules
@@ -103,6 +105,7 @@ If no notification rules are specified, all events will be logged. You can creat
 ### Examples
 
 **Monitor all issues and PRs:**
+
 ```yaml
 notifications:
   - event_type: "issues"
@@ -110,6 +113,7 @@ notifications:
 ```
 
 **Only new issues and PRs:**
+
 ```yaml
 notifications:
   - event_type: "issues"
@@ -119,6 +123,7 @@ notifications:
 ```
 
 **Monitor specific repositories:**
+
 ```yaml
 notifications:
   - event_type: "issues"
@@ -188,4 +193,4 @@ go test ./...
 
 ## License
 
-[Add your license here] 
+[Add your license here]

@@ -43,3 +43,4 @@ config.yml
 # Build output
 bin/
 dist/ 
+PROMPT.txt
